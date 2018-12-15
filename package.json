@@ -1,0 +1,13 @@
+{
+  "name": "webrtc-jsonp",
+  "version": "0.1.0",
+  "main": "index.js",
+  "author": "MaxSvargal <maxsvargal@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^10.12.15",
+    "fuse-box": "^3.6.0",
+    "ts-node": "^7.0.1",
+    "typescript": "^3.2.2"
+  }
+}
