@@ -8,6 +8,7 @@
     "@types/node": "^10.12.15",
     "fuse-box": "^3.6.0",
     "ts-node": "^7.0.1",
-    "typescript": "^3.2.2"
+    "typescript": "^3.2.2",
+    "wrtc": "^0.3.2"
   }
 }

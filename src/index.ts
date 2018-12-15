@@ -1,5 +1,6 @@
 
 import { EventEmitter } from 'events'
+const wrtc= require('wrtc')
 
 interface IOptions {
   connection: RTCConfiguration
@@ -10,7 +11,7 @@ export default class WebRTC extends EventEmitter {
 
   constructor({ connection }: IOptions) {
     super()
-    this.rpc = new RTCPeerConnection(connection)
+    this.rpc = new wrtc.RTCPeerConnection(connection)
     console.log(this.rpc)
     this.rpc.onicecandidate = candidate => this.emit('icecandidate', candidate)
     this.rpc.onnegotiationneeded = () => this.emit('negotiationneeded')
@@ -28,5 +29,9 @@ export default class WebRTC extends EventEmitter {
     channel.onopen = () => this.emit('channelopen')
     channel.onmessage = ({ data }) => this.emit('message', data)
     return channel
+  }
+
+  setRemoteDescription = (offer: RTCSessionDescriptionInit) => {
+    this.rpc.setRemoteDescription(offer)
   }
 }

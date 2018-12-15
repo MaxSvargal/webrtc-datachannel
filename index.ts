@@ -21,8 +21,9 @@ rtc.on('negotiationneeded', async () => {
   console.log(offer.sdp)
 })
 
-const peerForm = document.getElementById('peer')
-peerForm.addEventListener('submit', (e) => {
-  e.preventDefault()
-  console.log(e.target[0].value)
-})
+// const peerForm = document.getElementById('peer')
+// peerForm.addEventListener('submit', (e) => {
+//   e.preventDefault()
+//   console.log(e.target[0].value)
+  
+// })
