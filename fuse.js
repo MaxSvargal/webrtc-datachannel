@@ -47,13 +47,13 @@ task('clean', () =>
 
 task('dist', [ 'clean' ], async context => {
   context.isProduction = true
-  fs.copySync('src/404.html', 'dist/404.html')
+  // fs.copySync('src/404.html', 'dist/404.html')
 
   const fuse = context.getConfig()
   
   fuse
     .bundle('app')
-    .instructions('>index.tsx')
+    .instructions('>index.ts')
   
   await fuse.run()
 })
