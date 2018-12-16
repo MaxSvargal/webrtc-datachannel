@@ -35,7 +35,6 @@ rtc.on('negotiationneeded', async () => {
 const main = async () => {
   const { sdp: offer } = await rtc.createOffer()
   const candidates = await rtc.getCandidates()
-  console.log({ candidates })
 
   const request = JSON.stringify([ encodeURI(offer!), candidates ])
   const compressed = lz.compressToUTF16(request)
@@ -46,8 +45,12 @@ const main = async () => {
   console.log('Pass request to recipient:')
   console.log(decompressed)
 
-  const answer = await askQuestion('Type answer: ')
-  const remote = await rtc.setRemote(decodeURI(answer))
+  const response = await askQuestion('Type answer: ')
+  const [ encodedAnswer, decodedCandidates ] = JSON.stringify(response)
+
+  await rtc.addCandidates(decodedCandidates)
+  const remote = await rtc.setRemote(decodeURI(encodedAnswer))
+
   console.log(remote)
 }
 
