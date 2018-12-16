@@ -9,14 +9,20 @@ interface IOptions {
 export default class WebRTC extends EventEmitter {
   private rpc: RTCPeerConnection
   private candidates: RTCIceCandidate[]
+  private dataChannel: RTCDataChannel | null
 
   constructor({ connection }: IOptions) {
     super()
     this.candidates = []
+    this.dataChannel = null
     this.rpc = new wrtc.RTCPeerConnection(connection)
     this.rpc.onicecandidate = ({ candidate }) => (console.log({ candidate }), candidate && this.candidates.push(candidate))
     this.rpc.onnegotiationneeded = () => this.emit('negotiationneeded')
-    this.rpc.ondatachannel = event => this.emit('datachannel', event)
+    this.rpc.ondatachannel = event => {
+      this.dataChannel = event.channel
+      this.dataChannel.onmessage = (msg) => this.emit('msg', msg)
+      this.emit('datachannel', event)
+    }
     this.rpc.onconnectionstatechange = event => console.log('connectionstatechange', event)
   }
 
@@ -61,4 +67,7 @@ export default class WebRTC extends EventEmitter {
     await Promise.all(promises)
     return this.candidates
   }
+
+  sendMessage = (message: object) =>
+    this.dataChannel!.send(JSON.stringify(message))
 }

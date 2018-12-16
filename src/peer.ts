@@ -23,18 +23,19 @@ const rtc = new WebRTC({
 
 rtc.on('icecandidate', (candidate) => console.log(candidate.candidate))
 rtc.on('open', () => console.log('open'))
-rtc.on('message', (message) => console.log('message', message))
+rtc.on('message', (message) => (console.log('message', message), rtc.sendMessage({ type: 'response', message: 'Bar' })))
+rtc.on('msg', (msg) => console.log('msg', msg))
 rtc.on('datachannel', (event) => console.log('datachannel', event))
 
-rtc.createChannel()
-
 const main = async () => {
+  rtc.createChannel()
+
   const request = await askQuestion('Type request: ')
   const [ encodedOffer, decodedCandidates ] = JSON.parse(request)
 
   const { sdp: answer } = await rtc.setOffer(decodeURI(encodedOffer))
   await rtc.addCandidates(decodedCandidates)
-
+  // waitinf for candidates?
   const candidates = await rtc.getCandidates()
   const response = JSON.stringify([ encodeURI(answer!), candidates ])
 

@@ -24,7 +24,10 @@ const rtc = new WebRTC({
 rtc.on('icecandidate', (candidate) => console.log(candidate.candidate))
 rtc.on('open', () => console.log('open'))
 rtc.on('message', (message) => console.log('message', message))
-rtc.on('datachannel', (event) => console.log('datachannel', event))
+rtc.on('datachannel', (event) => {
+  console.log('datachannel', event)
+  rtc.sendMessage({ type: 'request', message: 'Foo' })
+})
 
 rtc.createChannel()
 
@@ -49,7 +52,7 @@ const main = async () => {
   const [ encodedAnswer, decodedCandidates ] = JSON.parse(response)
 
   const remote = await rtc.setRemote(decodeURI(encodedAnswer))
-  await rtc.addCandidates(decodedCandidates)
+  if (decodedCandidates) await rtc.addCandidates(decodedCandidates)
 
   console.log(remote)
 }
