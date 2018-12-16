@@ -33,7 +33,10 @@ const main = async () => {
   const [ encodedOffer, decodedCandidates ] = JSON.parse(request)
 
   const { sdp: answer } = await rtc.setOffer(decodeURI(encodedOffer))
+  console.log({ decodedCandidates })
   await rtc.addCandidates(decodedCandidates)
+  const candidates = await rtc.getCandidates()
+  console.log({ candidates })
 
   const compressed = lz.compressToUTF16(encodeURI(answer!))
   console.log('original size: ', answer!.length)

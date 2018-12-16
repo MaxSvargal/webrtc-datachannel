@@ -14,7 +14,7 @@ export default class WebRTC extends EventEmitter {
     super()
     this.candidates = []
     this.rpc = new wrtc.RTCPeerConnection(connection)
-    this.rpc.onicecandidate = ({ candidate }) => candidate && this.candidates.push(candidate)
+    this.rpc.onicecandidate = ({ candidate }) => (console.log({ candidate }), candidate && this.candidates.push(candidate))
     this.rpc.onnegotiationneeded = () => this.emit('negotiationneeded')
     this.rpc.ondatachannel = event => this.emit('datachannel', event)
     this.rpc.onconnectionstatechange = event => console.log('connectionstatechange', event)
@@ -57,7 +57,8 @@ export default class WebRTC extends EventEmitter {
 
   addCandidates = async (candidates: string) => {
     const values = JSON.parse(candidates) as RTCIceCandidateInit[]
-    values.forEach((candidate) => this.rpc.addIceCandidate(new wrtc.RTCIceCandidate(candidate)))
+    const promises = values.map((candidate) => this.rpc.addIceCandidate(new wrtc.RTCIceCandidate(candidate)))
+    await Promise.all(promises)
     return this.candidates
   }
 }

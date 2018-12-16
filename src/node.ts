@@ -35,6 +35,7 @@ rtc.on('negotiationneeded', async () => {
 const main = async () => {
   const { sdp: offer } = await rtc.createOffer()
   const candidates = await rtc.getCandidates()
+  console.log({ candidates })
 
   const request = JSON.stringify([ encodeURI(offer!), candidates ])
   const compressed = lz.compressToUTF16(request)
@@ -42,7 +43,7 @@ const main = async () => {
   console.log('compressed size: ', compressed.length)
   const decompressed = lz.decompressFromUTF16(compressed)
 
-  console.log('Pass request it to recipient:')
+  console.log('Pass request to recipient:')
   console.log(decompressed)
 
   const answer = await askQuestion('Type answer: ')
