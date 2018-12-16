@@ -48,8 +48,8 @@ const main = async () => {
   const response = await askQuestion('Type answer: ')
   const [ encodedAnswer, decodedCandidates ] = JSON.parse(response)
 
-  await rtc.addCandidates(decodedCandidates)
   const remote = await rtc.setRemote(decodeURI(encodedAnswer))
+  await rtc.addCandidates(decodedCandidates)
 
   console.log(remote)
 }
