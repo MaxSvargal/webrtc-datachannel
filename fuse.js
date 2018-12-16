@@ -6,7 +6,7 @@ context(
   class {
     getConfig() {
       return FuseBox.init({
-        homeDir: "./",
+        homeDir: "./src",
         output: 'dist/$name.js',
         sourceMaps: true,
         useTypescriptCompiler : true,

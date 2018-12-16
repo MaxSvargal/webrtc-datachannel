@@ -1,37 +1,79 @@
+import WebRTC from './webrtc'
+import lz from 'lz-string'
+import qrcode from 'qrcode'
 
-import { EventEmitter } from 'events'
-const wrtc= require('wrtc')
-
-interface IOptions {
-  connection: RTCConfiguration
-}
-
-export default class WebRTC extends EventEmitter {
-  private rpc: RTCPeerConnection
-
-  constructor({ connection }: IOptions) {
-    super()
-    this.rpc = new wrtc.RTCPeerConnection(connection)
-    console.log(this.rpc)
-    this.rpc.onicecandidate = candidate => this.emit('icecandidate', candidate)
-    this.rpc.onnegotiationneeded = () => this.emit('negotiationneeded')
-    this.rpc.ondatachannel = event => this.emit('datachannel', event)
+const rtc = new WebRTC({
+  connection: {
+    iceServers: [
+      { urls: [ 'stun:stun.l.google.com:19302' ] }
+    ]
   }
+})
 
-  createOffer = async () => {
-    const offer = await this.rpc.createOffer()
-    await this.rpc.setLocalDescription(offer)
-    return offer
-  }
+rtc.on('icecandidate', (candidate) => console.log(candidate.candidate))
+rtc.on('open', () => console.log('open'))
+rtc.on('message', (message) => console.log('message', message))
+rtc.on('datachannel', (event) => console.log('datachannel', event))
 
-  createChannel = (name = 'chat') => {
-    const channel = this.rpc.createDataChannel(name)
-    channel.onopen = () => this.emit('channelopen')
-    channel.onmessage = ({ data }) => this.emit('message', data)
-    return channel
-  }
+rtc.createChannel()
 
-  setRemoteDescription = (offer: RTCSessionDescriptionInit) => {
-    this.rpc.setRemoteDescription(offer)
-  }
-}
+rtc.on('negotiationneeded', async () => {
+  console.log('negotiationneeded')
+})
+
+const offerForm = document.getElementById('offer')
+
+offerForm!.addEventListener('submit', async (e) => {
+  e.preventDefault()
+  const value = e.target![0].value
+  const { sdp: answer } = await rtc.setOffer(value)
+  console.log('Pass answer to initiator:')
+  console.log(answer)
+
+  const compressed = lz.compressToUTF16(encodeURI(answer!))
+  console.log(compressed)
+  console.log('original size: ', answer!.length)
+  console.log('compressed size: ', compressed.length)
+
+  qrcode.toCanvas(document.getElementById('qrcode'), compressed)
+})
+
+const answerForm = document.getElementById('answer')
+
+answerForm!.addEventListener('submit', async (e) => {
+  e.preventDefault()
+  const value = e.target![0].value
+  const remote = await rtc.setRemote(value)
+  console.log({ remote })
+})
+
+const candidatesForm = document.getElementById('candidates')
+
+candidatesForm!.addEventListener('submit', async (e) => {
+  e.preventDefault()
+  const candidates = e.target![0].value
+  console.log({ candidates })
+  rtc.addCandidates(candidates)
+})
+
+const createOfferEl = document.getElementById('createOffer')
+createOfferEl!.addEventListener('click', async () => {
+  const { sdp: offer } = await rtc.createOffer()
+  const candidates = await rtc.getCandidates()
+
+  const request = JSON.stringify([ encodeURI(offer!), candidates ])
+  const compressed = lz.compressToUTF16(request)
+  console.log(compressed)
+  console.log('original size: ', request.length)
+  console.log('compressed size: ', compressed.length)
+
+  qrcode.toCanvas(document.getElementById('qrcode'), compressed)
+
+  const decompressed = lz.decompressFromUTF16(compressed)
+  const [ encodedOffer, decodedCandidates ] = JSON.parse(decompressed)
+
+  console.log('Pass it to recipient:')
+  console.log(decodeURI(encodedOffer))
+  console.log('Candidates:')
+  console.log(decodedCandidates)
+})
