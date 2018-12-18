@@ -1,4 +1,4 @@
-import WebRTC from './webrtc'
+import WebRTC from '../src/webrtc'
 import lz from 'lz-string'
 import qrcode from 'qrcode'
 

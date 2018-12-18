@@ -5,8 +5,14 @@ interface JRPCMessage {
   message: string
 }
 
+interface Compressor {
+  compress: Function
+  decompress: Function
+}
+
 interface IOptions {
-  connection: RTCConfiguration
+  connection?: RTCConfiguration
+  compressor?: Compressor,
   wrtc?: {
     RTCPeerConnection: typeof RTCPeerConnection
     RTCIceCandidate: typeof RTCIceCandidate
@@ -14,15 +20,18 @@ interface IOptions {
 }
 
 export default class WebRTC extends EventEmitter {
+  private compressor: Compressor | null = null
   private rpc: RTCPeerConnection
   private RTCIceCandidate: typeof RTCIceCandidate
   private candidates: RTCIceCandidate[] = []
   private alisteners: { [nonce: number]: Function } = {}
   private dataChannel: RTCDataChannel | null = null
-  public messageNonce = 0
+  private offer: RTCSessionDescriptionInit['sdp'] | null = null
+  private messageNonce = 0
 
-  constructor({ connection, wrtc }: IOptions) {
+  constructor({ connection, wrtc, compressor }: IOptions) {
     super()
+    if (compressor) this.compressor = compressor
 
     const RTC = wrtc ? wrtc.RTCPeerConnection : RTCPeerConnection
     this.RTCIceCandidate = wrtc ? wrtc.RTCIceCandidate : RTCIceCandidate
@@ -46,6 +55,8 @@ export default class WebRTC extends EventEmitter {
   }
 
   getCandidates = async (i = 0): Promise<string> => {
+    return Promise.resolve(JSON.stringify(this.candidates))
+
     if (i >= 20) return Promise.reject('No connection.')
     if (this.candidates.length > 0)
       return Promise.resolve(JSON.stringify(this.candidates))
@@ -58,7 +69,21 @@ export default class WebRTC extends EventEmitter {
   createOffer = async () => {
     const offer = await this.rpc.createOffer()
     await this.rpc.setLocalDescription(offer)
-    return offer
+    this.offer = offer.sdp
+    return offer.sdp
+  }
+
+  getCompressedOffer = () => {
+    if (!this.offer || !this.compressor)
+      throw Error('Offer is not created yet or compressor is not defined.')
+
+    const request = JSON.stringify([ encodeURI(this.offer), this.candidates ])
+    return this.compressor.compress(request)
+  }
+
+  decompressOffer = () => {
+    if (!this.rpc || !this.compressor)
+      throw Error('Offer is not created yet or compressor is not defined.')
   }
 
   createChannel = (name = 'chat') => {
@@ -70,7 +95,7 @@ export default class WebRTC extends EventEmitter {
       try {
         const msg: JRPCMessage = JSON.parse(data)
         const { nonce, message } = msg
-        this.emit('message', msg)
+        this.emit('message', message)
 
         if (this.alisteners[nonce]) {
           this.alisteners[nonce](message)
@@ -87,7 +112,7 @@ export default class WebRTC extends EventEmitter {
     await this.rpc.setRemoteDescription({ type: 'offer', sdp: offer })
     const answer = await this.rpc.createAnswer()
     await this.rpc.setLocalDescription(answer)
-    return answer
+    return answer.sdp
   }
 
   setRemote = async (answer: string) => {
@@ -104,6 +129,9 @@ export default class WebRTC extends EventEmitter {
     return this.candidates
   }
 
+  channelOpened = async () =>
+    new Promise(resolve => this.dataChannel ? resolve() : this.on('datachannel', resolve))
+
   send = (message: any): Promise<MessageEvent> =>
     new Promise((resolve, reject) => {
       if (!this.dataChannel)
@@ -116,4 +144,34 @@ export default class WebRTC extends EventEmitter {
 
       this.alisteners[this.messageNonce] = resolve
     })
+
+  initiateConnect = async () => {
+    this.createChannel()
+    const offer = await this.createOffer()
+    const candidates = await this.getCandidates()
+    const request = JSON.stringify([ encodeURI(offer!), candidates ])
+    return request
+  }
+
+  setAnswer = async (response: string) => {
+    try {
+      const [ encodedAnswer, decodedCandidates ] = JSON.parse(response)
+
+      await this.setRemote(decodeURI(encodedAnswer))
+      await this.addCandidates(decodedCandidates)
+      await this.channelOpened()
+    } catch (err) {
+      return err
+    }
+  }
+
+  initByRequest = async (request: string) => {
+    this.createChannel()
+    const [ encodedOffer, decodedCandidates ] = JSON.parse(request)
+    const answer = await this.setOffer(decodeURI(encodedOffer))
+    await this.addCandidates(decodedCandidates)
+    const candidates = await this.getCandidates()
+    const response = JSON.stringify([ encodeURI(answer!), candidates ])
+    return response
+  }
 }
