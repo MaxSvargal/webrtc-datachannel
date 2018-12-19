@@ -1,12 +1,8 @@
-import WebRTC from '../src/webrtc'
-import { lz, askQuestion, wrtc } from './nodejs'
+import WebRtcJsonp from '../src/webrtc'
+import { askQuestion, wrtc } from './nodejs'
 
-const rtc = new WebRTC({
+const rtc = new WebRtcJsonp({
   wrtc,
-  compressor: {
-    compress: lz.compressToUTF16,
-    decompress: lz.decompressFromUTF16
-  },
   connection: {
     iceServers: [
       { urls: [ 'stun:stun.l.google.com:19302' ] }
@@ -14,14 +10,7 @@ const rtc = new WebRTC({
   }
 })
 
-rtc.on('open', () => console.log('Channel opened'))
-rtc.on('message', (message) => {
-  if (message.question === 'I am fine. And you?') {
-    rtc.send({ answer: 'I am fine too.' })
-  }
-})
-
-const mainSimple = async () => {
+const main = async () => {
   const request = await rtc.initiateConnect()
   console.log('Pass request to recipient:')
   console.log(request)
@@ -30,26 +19,18 @@ const mainSimple = async () => {
   await rtc.setAnswer(response)
 
   console.log('Connection opened')
-}
 
-const main = async () => {
-  rtc.createChannel()
+  rtc.on('message', async (message) => {
+    console.log({ message })
 
-  const offer = await rtc.createOffer()
-  const candidates = await rtc.getCandidates()
+    if (message.answer === 'I am fine.') {
+      await rtc.send({ answer: 'Nice.' })
+    }
 
-  const request = JSON.stringify([ encodeURI(offer!), candidates ])
-  console.log('Pass request to recipient:')
-  console.log(request)
-
-  const response = await askQuestion('Type answer: ')
-  const [ encodedAnswer, decodedCandidates ] = JSON.parse(response)
-
-  await rtc.setRemote(decodeURI(encodedAnswer))
-  await rtc.addCandidates(decodedCandidates)
-  await rtc.channelOpened()
-
-  console.log('opened')
+    if (message.question === 'And you?') {
+      await rtc.send({ answer: 'I am fine too.' })
+    }
+  })
 
   console.log('Send welcome message...')
   const question = 'How are you?'
@@ -58,5 +39,4 @@ const main = async () => {
   console.log({ answer })
 }
 
-mainSimple()
-console.log(main)
+main()
