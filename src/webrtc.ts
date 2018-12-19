@@ -19,7 +19,7 @@ interface IOptions {
   }
 }
 
-export default class WebRTC extends EventEmitter {
+export default class WebRtcJsonp extends EventEmitter {
   private compressor: Compressor | null = null
   private rpc: RTCPeerConnection
   private RTCIceCandidate: typeof RTCIceCandidate
@@ -55,8 +55,6 @@ export default class WebRTC extends EventEmitter {
   }
 
   getCandidates = async (i = 0): Promise<string> => {
-    return Promise.resolve(JSON.stringify(this.candidates))
-
     if (i >= 20) return Promise.reject('No connection.')
     if (this.candidates.length > 0)
       return Promise.resolve(JSON.stringify(this.candidates))
@@ -156,7 +154,6 @@ export default class WebRTC extends EventEmitter {
   setAnswer = async (response: string) => {
     try {
       const [ encodedAnswer, decodedCandidates ] = JSON.parse(response)
-
       await this.setRemote(decodeURI(encodedAnswer))
       await this.addCandidates(decodedCandidates)
       await this.channelOpened()
