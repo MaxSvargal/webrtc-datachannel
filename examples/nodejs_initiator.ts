@@ -1,7 +1,7 @@
-import WebRtcJsonp from '../src/webrtc'
+import WebRtcDataChannel from '../src'
 import { askQuestion, wrtc } from './nodejs'
 
-const rtc = new WebRtcJsonp({
+const rtc = new WebRtcDataChannel({
   wrtc,
   connection: {
     iceServers: [

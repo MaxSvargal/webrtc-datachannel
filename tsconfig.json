@@ -1,11 +1,15 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "target": "es6",
+    "target": "es5",
+    "lib": [
+      "es2015",
+      "dom"
+    ],
+    "outDir": "./dist",
+    "declaration": true,
     "sourceMap": true,
     "allowJs": false,
-    "moduleResolution": "node",
-    "rootDir": "src",
     "forceConsistentCasingInFileNames": true,
     "noImplicitReturns": true,
     "noImplicitThis": true,
@@ -18,14 +22,13 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "strict": true,
-    "resolveJsonModule": true,
-    "noEmit": true,
-    "isolatedModules": true
+    "resolveJsonModule": true
   },
   "include": [
-    "src/**/*"
+    "src/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "src/**/*.test.ts"
   ]
 }

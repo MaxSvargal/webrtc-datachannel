@@ -26,13 +26,13 @@ const offerForm = document.getElementById('offer')
 offerForm!.addEventListener('submit', async (e) => {
   e.preventDefault()
   const value = e.target![0].value
-  const { sdp: answer } = await rtc.setOffer(value)
+  const answer = await rtc.setOffer(value)
   console.log('Pass answer to initiator:')
   console.log(answer)
 
-  const compressed = lz.compressToUTF16(encodeURI(answer!))
+  const compressed = lz.compressToUTF16(encodeURI(answer))
   console.log(compressed)
-  console.log('original size: ', answer!.length)
+  console.log('original size: ', answer.length)
   console.log('compressed size: ', compressed.length)
 
   qrcode.toCanvas(document.getElementById('qrcode'), compressed)
@@ -58,10 +58,10 @@ candidatesForm!.addEventListener('submit', async (e) => {
 
 const createOfferEl = document.getElementById('createOffer')
 createOfferEl!.addEventListener('click', async () => {
-  const { sdp: offer } = await rtc.createOffer()
+  const offer = await rtc.createOffer()
   const candidates = await rtc.getCandidates()
 
-  const request = JSON.stringify([ encodeURI(offer!), candidates ])
+  const request = JSON.stringify([ encodeURI(offer), candidates ])
   const compressed = lz.compressToUTF16(request)
   console.log(compressed)
   console.log('original size: ', request.length)

@@ -6,20 +6,20 @@ interface JRPCMessage {
 }
 
 interface Compressor {
-  compress: Function
-  decompress: Function
+  compress: (a: string) => string
+  decompress: (a: string) => string
 }
 
 interface IOptions {
   connection?: RTCConfiguration
-  compressor?: Compressor,
+  compressor?: Compressor
   wrtc?: {
     RTCPeerConnection: typeof RTCPeerConnection
     RTCIceCandidate: typeof RTCIceCandidate
   }
 }
 
-export default class WebRtcJsonp extends EventEmitter {
+export default class WebRtcDataChannel extends EventEmitter {
   private compressor: Compressor | null = null
   private rpc: RTCPeerConnection
   private RTCIceCandidate: typeof RTCIceCandidate
@@ -29,7 +29,7 @@ export default class WebRtcJsonp extends EventEmitter {
   private offer: RTCSessionDescriptionInit['sdp'] | null = null
   private messageNonce = 0
 
-  constructor({ connection, wrtc, compressor }: IOptions) {
+  constructor({ connection, wrtc, compressor }: IOptions = {}) {
     super()
     if (compressor) this.compressor = compressor
 
@@ -39,6 +39,7 @@ export default class WebRtcJsonp extends EventEmitter {
     this.rpc = new RTC(connection)
 
     this.rpc.onicecandidate = ({ candidate }) => {
+      console.log({ candidate })
       if (candidate) {
         this.candidates.push(candidate)
         this.emit('icecandidate', candidate)
@@ -48,7 +49,7 @@ export default class WebRtcJsonp extends EventEmitter {
     this.rpc.ondatachannel = event => {
       this.dataChannel = event.channel
       this.emit('datachannel', event)
-    }  
+    }
     
     this.rpc.onconnectionstatechange = event =>
       this.emit('connectionstatechange', event)
