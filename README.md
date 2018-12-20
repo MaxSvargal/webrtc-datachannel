@@ -1,6 +1,6 @@
 # webrtc-datachannel
 
-It's a modern and simple library of webrtc data channels for comfortable use it in node js and browsers without dependencies.
+This is a modern and simple library of webrtc data channels for comfortable using in node js and browsers.
 
 This library doesn't include a signal server!
 
@@ -59,4 +59,4 @@ Recipient:
 ```
 
 ### Using extended API
-Please, see [examples](#) folder
+Please, see [examples](https://github.com/MaxSvargal/webrtc-datachannel/tree/master/examples) folder
