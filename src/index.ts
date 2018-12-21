@@ -1,5 +1,3 @@
-import { EventEmitter } from 'events'
-
 interface JRPCMessage {
   nonce: number
   message: string
@@ -19,18 +17,18 @@ interface IOptions {
   }
 }
 
-export default class WebRtcDataChannel extends EventEmitter {
+export default class WebRtcDataChannel {
   private compressor: Compressor | null = null
   private rpc: RTCPeerConnection
   private RTCIceCandidate: typeof RTCIceCandidate
   private candidates: RTCIceCandidate[] = []
   private alisteners: { [nonce: number]: Function } = {}
+  private eventsListeners: { [event: string]: Function[] } = {}
   private dataChannel: RTCDataChannel | null = null
   private offer: RTCSessionDescriptionInit['sdp'] | null = null
   private messageNonce = 0
 
   constructor({ connection, wrtc, compressor }: IOptions = {}) {
-    super()
     if (compressor) this.compressor = compressor
 
     const RTC = wrtc ? wrtc.RTCPeerConnection : RTCPeerConnection
@@ -54,6 +52,15 @@ export default class WebRtcDataChannel extends EventEmitter {
     this.rpc.onconnectionstatechange = event =>
       this.emit('connectionstatechange', event)
   }
+
+  on = (event: string, subscriber: (event: any) => void) =>
+    Array.isArray(this.eventsListeners[event])
+      ? this.eventsListeners[event].push(subscriber)
+      : this.eventsListeners[event] = [ subscriber ]
+
+  emit = (event: string, data?: any) =>
+    Array.isArray(this.eventsListeners[event]) &&
+      this.eventsListeners[event].forEach(fn => fn(data))
 
   getCandidates = async (i = 0): Promise<string> => {
     if (i >= 20) return Promise.reject('No connection.')

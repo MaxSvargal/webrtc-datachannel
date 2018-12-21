@@ -1,7 +1,7 @@
 {
   "name": "webrtc-datachannel",
   "description": "It's a modern and simple library of webrtc data channels for comfortable use it in node js and browsers.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": "MaxSvargal <maxsvargal@gmail.com>",
   "license": "MIT",
   "main": "dist/index.js",
