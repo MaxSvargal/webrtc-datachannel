@@ -1,17 +1,4 @@
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -48,19 +35,25 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var events_1 = require("events");
-var WebRtcDataChannel = /** @class */ (function (_super) {
-    __extends(WebRtcDataChannel, _super);
+var WebRtcDataChannel = /** @class */ (function () {
     function WebRtcDataChannel(_a) {
-        var _b = _a === void 0 ? {} : _a, connection = _b.connection, wrtc = _b.wrtc, compressor = _b.compressor;
-        var _this = _super.call(this) || this;
-        _this.compressor = null;
-        _this.candidates = [];
-        _this.alisteners = {};
-        _this.dataChannel = null;
-        _this.offer = null;
-        _this.messageNonce = 0;
-        _this.getCandidates = function (i) {
+        var _b = _a === void 0 ? {} : _a, connection = _b.connection, wrtc = _b.wrtc;
+        var _this = this;
+        this.candidates = [];
+        this.alisteners = {};
+        this.eventsListeners = {};
+        this.dataChannel = null;
+        this.messageNonce = 0;
+        this.on = function (event, subscriber) {
+            return Array.isArray(_this.eventsListeners[event])
+                ? _this.eventsListeners[event].push(subscriber)
+                : _this.eventsListeners[event] = [subscriber];
+        };
+        this.emit = function (event, data) {
+            return Array.isArray(_this.eventsListeners[event]) &&
+                _this.eventsListeners[event].forEach(function (fn) { return fn(data); });
+        };
+        this.getCandidates = function (i) {
             if (i === void 0) { i = 0; }
             return __awaiter(_this, void 0, void 0, function () {
                 return __generator(this, function (_a) {
@@ -79,7 +72,7 @@ var WebRtcDataChannel = /** @class */ (function (_super) {
                 });
             });
         };
-        _this.createOffer = function () { return __awaiter(_this, void 0, void 0, function () {
+        this.createOffer = function () { return __awaiter(_this, void 0, void 0, function () {
             var offer;
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -89,22 +82,11 @@ var WebRtcDataChannel = /** @class */ (function (_super) {
                         return [4 /*yield*/, this.rpc.setLocalDescription(offer)];
                     case 2:
                         _a.sent();
-                        this.offer = offer.sdp;
                         return [2 /*return*/, offer.sdp];
                 }
             });
         }); };
-        _this.getCompressedOffer = function () {
-            if (!_this.offer || !_this.compressor)
-                throw Error('Offer is not created yet or compressor is not defined.');
-            var request = JSON.stringify([encodeURI(_this.offer), _this.candidates]);
-            return _this.compressor.compress(request);
-        };
-        _this.decompressOffer = function () {
-            if (!_this.rpc || !_this.compressor)
-                throw Error('Offer is not created yet or compressor is not defined.');
-        };
-        _this.createChannel = function (name) {
+        this.createChannel = function (name) {
             if (name === void 0) { name = 'chat'; }
             var channel = _this.rpc.createDataChannel(name);
             channel.onopen = function () { return _this.emit('open'); };
@@ -127,7 +109,7 @@ var WebRtcDataChannel = /** @class */ (function (_super) {
             };
             return channel;
         };
-        _this.setOffer = function (offer) { return __awaiter(_this, void 0, void 0, function () {
+        this.setOffer = function (offer) { return __awaiter(_this, void 0, void 0, function () {
             var answer;
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -144,7 +126,7 @@ var WebRtcDataChannel = /** @class */ (function (_super) {
                 }
             });
         }); };
-        _this.setRemote = function (answer) { return __awaiter(_this, void 0, void 0, function () {
+        this.setRemote = function (answer) { return __awaiter(_this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0: return [4 /*yield*/, this.rpc.setRemoteDescription({ type: 'answer', sdp: answer })];
@@ -154,7 +136,7 @@ var WebRtcDataChannel = /** @class */ (function (_super) {
                 }
             });
         }); };
-        _this.addCandidates = function (candidates) { return __awaiter(_this, void 0, void 0, function () {
+        this.addCandidates = function (candidates) { return __awaiter(_this, void 0, void 0, function () {
             var values, promises;
             var _this = this;
             return __generator(this, function (_a) {
@@ -171,13 +153,13 @@ var WebRtcDataChannel = /** @class */ (function (_super) {
                 }
             });
         }); };
-        _this.channelOpened = function () { return __awaiter(_this, void 0, void 0, function () {
+        this.channelOpened = function () { return __awaiter(_this, void 0, void 0, function () {
             var _this = this;
             return __generator(this, function (_a) {
                 return [2 /*return*/, new Promise(function (resolve) { return _this.dataChannel ? resolve() : _this.on('datachannel', resolve); })];
             });
         }); };
-        _this.send = function (message) {
+        this.send = function (message) {
             return new Promise(function (resolve, reject) {
                 if (!_this.dataChannel)
                     return reject(Error('dataChannel doesn\'t opened'));
@@ -188,7 +170,7 @@ var WebRtcDataChannel = /** @class */ (function (_super) {
                 _this.alisteners[_this.messageNonce] = resolve;
             });
         };
-        _this.initiateConnect = function () { return __awaiter(_this, void 0, void 0, function () {
+        this.initiateConnect = function () { return __awaiter(_this, void 0, void 0, function () {
             var offer, candidates, request;
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -205,7 +187,7 @@ var WebRtcDataChannel = /** @class */ (function (_super) {
                 }
             });
         }); };
-        _this.setAnswer = function (response) { return __awaiter(_this, void 0, void 0, function () {
+        this.setAnswer = function (response) { return __awaiter(_this, void 0, void 0, function () {
             var _a, encodedAnswer, decodedCandidates, err_1;
             return __generator(this, function (_b) {
                 switch (_b.label) {
@@ -229,7 +211,7 @@ var WebRtcDataChannel = /** @class */ (function (_super) {
                 }
             });
         }); };
-        _this.initByRequest = function (request) { return __awaiter(_this, void 0, void 0, function () {
+        this.initByRequest = function (request) { return __awaiter(_this, void 0, void 0, function () {
             var _a, encodedOffer, decodedCandidates, answer, candidates, response;
             return __generator(this, function (_b) {
                 switch (_b.label) {
@@ -250,29 +232,23 @@ var WebRtcDataChannel = /** @class */ (function (_super) {
                 }
             });
         }); };
-        if (compressor)
-            _this.compressor = compressor;
         var RTC = wrtc ? wrtc.RTCPeerConnection : RTCPeerConnection;
-        _this.RTCIceCandidate = wrtc ? wrtc.RTCIceCandidate : RTCIceCandidate;
-        _this.rpc = new RTC(connection);
-        _this.rpc.onicecandidate = function (_a) {
+        this.RTCIceCandidate = wrtc ? wrtc.RTCIceCandidate : RTCIceCandidate;
+        this.rpc = new RTC(connection);
+        this.rpc.onicecandidate = function (_a) {
             var candidate = _a.candidate;
-            console.log({ candidate: candidate });
-            if (candidate) {
-                _this.candidates.push(candidate);
-                _this.emit('icecandidate', candidate);
-            }
+            return candidate && (_this.candidates.push(candidate),
+                _this.emit('icecandidate', candidate));
         };
-        _this.rpc.ondatachannel = function (event) {
+        this.rpc.ondatachannel = function (event) {
             _this.dataChannel = event.channel;
             _this.emit('datachannel', event);
         };
-        _this.rpc.onconnectionstatechange = function (event) {
+        this.rpc.onconnectionstatechange = function (event) {
             return _this.emit('connectionstatechange', event);
         };
-        return _this;
     }
     return WebRtcDataChannel;
-}(events_1.EventEmitter));
+}());
 exports.default = WebRtcDataChannel;
 //# sourceMappingURL=index.js.map

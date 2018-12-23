@@ -1,31 +1,23 @@
-/// <reference types="node" />
-import { EventEmitter } from 'events';
-interface Compressor {
-    compress: (a: string) => string;
-    decompress: (a: string) => string;
-}
 interface IOptions {
     connection?: RTCConfiguration;
-    compressor?: Compressor;
     wrtc?: {
         RTCPeerConnection: typeof RTCPeerConnection;
         RTCIceCandidate: typeof RTCIceCandidate;
     };
 }
-export default class WebRtcDataChannel extends EventEmitter {
-    private compressor;
+export default class WebRtcDataChannel {
     private rpc;
     private RTCIceCandidate;
     private candidates;
     private alisteners;
+    private eventsListeners;
     private dataChannel;
-    private offer;
     private messageNonce;
-    constructor({ connection, wrtc, compressor }?: IOptions);
+    constructor({ connection, wrtc }?: IOptions);
+    on: (event: string, subscriber: (event: any) => void) => number | ((event: any) => void)[];
+    emit: (event: string, data?: any) => false | void;
     getCandidates: (i?: number) => Promise<string>;
-    createOffer: () => Promise<string | undefined>;
-    getCompressedOffer: () => string;
-    decompressOffer: () => void;
+    createOffer: () => Promise<string>;
     createChannel: (name?: string) => RTCDataChannel;
     setOffer: (offer: string) => Promise<string | undefined>;
     setRemote: (answer: string) => Promise<RTCSessionDescription | null>;

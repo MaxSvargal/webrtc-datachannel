@@ -3,14 +3,8 @@ interface JRPCMessage {
   message: string
 }
 
-interface Compressor {
-  compress: (a: string) => string
-  decompress: (a: string) => string
-}
-
 interface IOptions {
   connection?: RTCConfiguration
-  compressor?: Compressor
   wrtc?: {
     RTCPeerConnection: typeof RTCPeerConnection
     RTCIceCandidate: typeof RTCIceCandidate
@@ -18,31 +12,25 @@ interface IOptions {
 }
 
 export default class WebRtcDataChannel {
-  private compressor: Compressor | null = null
   private rpc: RTCPeerConnection
   private RTCIceCandidate: typeof RTCIceCandidate
   private candidates: RTCIceCandidate[] = []
   private alisteners: { [nonce: number]: Function } = {}
   private eventsListeners: { [event: string]: Function[] } = {}
   private dataChannel: RTCDataChannel | null = null
-  private offer: RTCSessionDescriptionInit['sdp'] | null = null
   private messageNonce = 0
 
-  constructor({ connection, wrtc, compressor }: IOptions = {}) {
-    if (compressor) this.compressor = compressor
-
+  constructor({ connection, wrtc }: IOptions = {}) {
     const RTC = wrtc ? wrtc.RTCPeerConnection : RTCPeerConnection
     this.RTCIceCandidate = wrtc ? wrtc.RTCIceCandidate : RTCIceCandidate
 
     this.rpc = new RTC(connection)
 
-    this.rpc.onicecandidate = ({ candidate }) => {
-      console.log({ candidate })
-      if (candidate) {
-        this.candidates.push(candidate)
+    this.rpc.onicecandidate = ({ candidate }) =>
+      candidate && (
+        this.candidates.push(candidate),
         this.emit('icecandidate', candidate)
-      }
-    }
+      )
 
     this.rpc.ondatachannel = event => {
       this.dataChannel = event.channel
@@ -75,21 +63,7 @@ export default class WebRtcDataChannel {
   createOffer = async () => {
     const offer = await this.rpc.createOffer()
     await this.rpc.setLocalDescription(offer)
-    this.offer = offer.sdp
-    return offer.sdp
-  }
-
-  getCompressedOffer = () => {
-    if (!this.offer || !this.compressor)
-      throw Error('Offer is not created yet or compressor is not defined.')
-
-    const request = JSON.stringify([ encodeURI(this.offer), this.candidates ])
-    return this.compressor.compress(request)
-  }
-
-  decompressOffer = () => {
-    if (!this.rpc || !this.compressor)
-      throw Error('Offer is not created yet or compressor is not defined.')
+    return offer.sdp as string
   }
 
   createChannel = (name = 'chat') => {
