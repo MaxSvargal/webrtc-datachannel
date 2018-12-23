@@ -43,7 +43,7 @@ Recipient:
   // Get `request` from initiator by signaller
   const answer = await rtc.initByRequest(request)
   // Then pass the `answer` back to initiator
-  await sendAnswer(answer)
+  sendAnswer(answer)
 
   // Just wait for open channel
   await rtc.channelOpened()

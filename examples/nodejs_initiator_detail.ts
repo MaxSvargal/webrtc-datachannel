@@ -1,7 +1,7 @@
 import WebRtcDataChannel from '../src'
 import { askQuestion, wrtc } from './nodejs'
 
-const rtc = new WebRTC({
+const rtc = new WebRtcDataChannel({
   wrtc,
   connection: {
     iceServers: [
